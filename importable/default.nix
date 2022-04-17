@@ -41,10 +41,16 @@ let
   # Given a Package File-name, or List of Package File-names, prepend each with the given Path
   #   pkgsOrPkgs: a single or list of package file-names
   #   path: path to prepend before each package file-name
-  extendPackageFilenamesWithPath = pkgOrPkgs: path: let
+  #
+  extendPackagePaths' = pkgOrPkgs: path: let
     pkgs = if (isList pkgOrPkgs) then pkgOrPkgs else [pkgOrPkgs];
-  in
-    attrValues (dirEntriesToAttrs path pkgs);
+    entries = dirEntriesToAttrs path pkgs;
+  in {
+    extendPackageEntriesWithPath = entries;
+    extendPackageFilenamesWithPath = attrValues entries;
+  };
+  inherit (extendPackagePaths')
+    extendPackageEntriesWithPath extendPackageFilenamesWithPath;
 
   # Given an iterator function for returning FQ Package (paths) and a list of Paths, import each
   # Package using the given Attrs
@@ -61,4 +67,9 @@ let
   in
     map (n: import n attrs) pkgs;
 
-in { inherit findImportableEntriesInPath findImportablesInPath extendPackageFilenamesWithPath importPkgsFrom; }
+in {
+  inherit
+    findImportableEntriesInPath findImportablesInPath
+    extendPackageEntriesWithPath extendPackageFilenamesWithPath
+    importPkgsFrom;
+}
