@@ -1,24 +1,47 @@
 let
-  isImportable = n: path: with builtins;
+  inherit (builtins) attrNames attrValues elem filter foldl' isList listToAttrs map match pathExists readDir replaceStrings;
+
+  isImportable = n: path:
     match ".*\\.nix" n != null || pathExists (path + ("/" + n + "/default.nix"));
 
-in {
   # Find a list of Nix importables from the given Path, ordered lexicographically
   #   path: path to search for Nix importables
-  findImportablesInPath = path: with builtins; let
+  findImportableEntriesInPath = path: let
     # find all the entries in a dir
     dirEntries = readDir path;
     # extract just the path-names
     dirNames = attrNames dirEntries;
+    # filter for the importable entries
     importableEntries = filter (n: (isImportable n path)) dirNames;
-  in map (n: (path + "/${n}")) importableEntries;
+    # extract the file-name to prefix + fully-qualified path
+    entryToAttr = n: let
+      entryNameSplit = match "(.+)\\.nix|(.+)" n;
+      entryNameNixFile = elem entryNameSplit 0;
+      entryNameNixDir = elem entryNameSplit 1;
+      entryPrefix =
+        if entryNameNixFile != null
+        then entryNameNixFile
+        else entryNameNixDir;
+      # name, value pair, where "name" has ".nix" removed
+      fullPath = path + "/${n}";
+    in
+      { name = entryPrefix; value = fullPath; };
+    # map importable entry to entryAttr
+    importableEntriesToAttrs =
+      listToAttrs
+        map (n: entryToAttr n) importableEntries;
+  in
+    importableEntriesToAttrs;
+
+  findImportablesInPath = path:
+    attrValues (findImportableEntriesInPath path);
 
   # Given a Package File-name, or List of Package File-names, prepend each with the given Path
   #   pkgsOrPkgs: a single or list of package file-names
   #   path: path to prepend before each package file-name
-  extendPackageFilenamesWithPath = pkgOrPkgs: path: with builtins; let
+  extendPackageFilenamesWithPath = pkgOrPkgs: path: let
     pkgs = if (isList pkgOrPkgs) then pkgOrPkgs else [pkgOrPkgs];
-  in builtins.map (n: (path + "/${n}")) pkgs;
+  in map (n: (path + "/${n}")) pkgs;
 
   # Given an iterator function for returning FQ Package (paths) and a list of Paths, import each
   # Package using the given Attrs
@@ -29,8 +52,9 @@ in {
   # e.g.
   #   importPkgsFrom (extendPackageFilenamesWithPath pkgs) paths attrs;
   #   importPkgsFrom findImportablesInPath paths attrs;
-  importPkgsFrom = fn: pathOrPaths: attrs: with builtins; let
+  importPkgsFrom = fn: pathOrPaths: attrs: let
     paths = if (isList pathOrPaths) then pathOrPaths else [pathOrPaths];
     pkgs = foldl' (prev: path: (prev ++ (fn path))) [] paths;
   in map (n: import n attrs) pkgs;
-}
+
+in { inherit findImportableEntriesInPath findImportablesInPath extendPackageFilenamesWithPath importPkgsFrom; }
