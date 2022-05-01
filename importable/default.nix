@@ -10,7 +10,7 @@ let
     entryPrefixes = filter (n: trace "name ${toString n}" entryNameSplit != null) entryNameSplit;
     entryPrefix = if (length entryPrefixes) == 0
                   then throw "Could not match an entry prefix against '${dir-entry}'."
-                  else elemAt 0 entryPrefixes;
+                  else elemAt entryPrefixes 0;
     # name, value pair, where "name" has ".nix" removed
     fullPath = path + "/${dir-entry}";
   in
