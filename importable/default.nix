@@ -7,8 +7,8 @@ let
   # extract the file-name to prefix + fully-qualified path
   dirEntryToAttr = path: n: let
     entryNameSplit = match "(.+)\\.nix|(.+)" n;
-    entryNameNixFile = elem entryNameSplit 0;
-    entryNameNixDir = elem entryNameSplit 1;
+    entryNameNixFile = elem 0 entryNameSplit;
+    entryNameNixDir = elem 1 entryNameSplit;
     entryPrefix =
       if entryNameNixFile != null
       then entryNameNixFile
