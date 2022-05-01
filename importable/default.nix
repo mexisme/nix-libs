@@ -61,7 +61,7 @@ let
   #   importPkgsFrom findImportablesInPath paths attrs;
   importPkgsFrom = fn: pathOrPaths: attrs: let
     paths = if (isList pathOrPaths) then pathOrPaths else [pathOrPaths];
-    pkgs = foldl' (prev: path: (prev ++ (fn path))) [] (trace (toString paths) paths);
+    pkgs = foldl' (prev: path: (prev ++ (fn (trace (toString path) path))) [] paths;
   in
     map (n: import n attrs) pkgs;
 
