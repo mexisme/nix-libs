@@ -1,5 +1,5 @@
 let
-  inherit (builtins) attrNames attrValues elemAt filter foldl' isList listToAttrs length map match pathExists readDir replaceStrings throw toString trace;
+  inherit (builtins) attrNames attrValues elemAt filter foldl' isList listToAttrs length map match pathExists readDir replaceStrings throw;
 
   isImportable = n: path:
     match ".*\\.nix" n != null || pathExists (path + ("/" + n + "/default.nix"));
@@ -7,7 +7,7 @@ let
   # extract the file-name to prefix + fully-qualified path
   dirEntryToAttr = path: dir-entry: let
     entryNameSplit = match "(.+)\\.nix|(.+)" dir-entry;
-    entryPrefixes = filter (n: trace "name ${toString n}" entryNameSplit != null) entryNameSplit;
+    entryPrefixes = filter (n: entryNameSplit != null) entryNameSplit;
     entryPrefix = if (length entryPrefixes) == 0
                   then throw "Could not match an entry prefix against '${dir-entry}'."
                   else elemAt entryPrefixes 0;
