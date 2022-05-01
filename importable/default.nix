@@ -1,5 +1,5 @@
 let
-  inherit (builtins) attrNames attrValues elemAt filter foldl' isList listToAttrs length map match pathExists readDir replaceStrings throw;
+  inherit (builtins) attrNames attrValues elemAt filter foldl' isList listToAttrs length map match pathExists readDir replaceStrings throw toString trace;
 
   isImportable = n: path:
     match ".*\\.nix" n != null || pathExists (path + ("/" + n + "/default.nix"));
@@ -61,7 +61,7 @@ let
   #   importPkgsFrom findImportablesInPath paths attrs;
   importPkgsFrom = fn: pathOrPaths: attrs: let
     paths = if (isList pathOrPaths) then pathOrPaths else [pathOrPaths];
-    pkgs = foldl' (prev: path: (prev ++ (fn path))) [] paths;
+    pkgs = foldl' (prev: path: (prev ++ (fn path))) [] (trace (toString paths) paths);
   in
     map (n: import n attrs) pkgs;
 
