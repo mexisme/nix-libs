@@ -1,20 +1,16 @@
 let
-  inherit (builtins) attrNames attrValues elem filter foldl' isList listToAttrs map match pathExists readDir replaceStrings;
+  inherit (builtins) attrNames attrValues elem filter foldl' isList listToAttrs length map match pathExists readDir replaceStrings throw trace;
 
   isImportable = n: path:
     match ".*\\.nix" n != null || pathExists (path + ("/" + n + "/default.nix"));
 
   # extract the file-name to prefix + fully-qualified path
-  dirEntryToAttr = path: n: let
-    entryNameSplit = match "(.+)\\.nix|(.+)" n;
-    entryNameNixFile = elem 0 entryNameSplit;
-    entryNameNixDir = elem 1 entryNameSplit;
-    entryPrefix =
-      if entryNameNixFile != null
-      then entryNameNixFile
-      else entryNameNixDir;
+  dirEntryToAttr = path: dir-entry: let
+    entryNameSplit = match "(.+)\\.nix|(.+)" dir-entry;
+    entryPrefixes = filter (n: trace "name ${n}" entryNameSplit != null) entryNameSplit;
+    entryPrefix = if (length entryPrefixes) == 0 then throw "Could not match an entry prefix against '${dir-entry}'." else elem 0 entryPrefixes;
     # name, value pair, where "name" has ".nix" removed
-    fullPath = path + "/${n}";
+    fullPath = path + "/${dir-entry}";
   in
     { name = entryPrefix; value = fullPath; };
 
