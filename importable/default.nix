@@ -1,37 +1,19 @@
 let
   inherit (builtins) attrNames attrValues elemAt filter foldl' isList listToAttrs length map match pathExists readDir replaceStrings throw toString trace;
 
-  isImportable = n: path:
-    match ".*\\.nix" n != null || pathExists (path + ("/" + n + "/default.nix"));
-
-  # extract the file-name to prefix + fully-qualified path
-  dirEntryToAttr = path: dir-entry: let
-    entryNameSplit = match "(.+)\\.nix|(.+)" dir-entry;
-    entryPrefixes = filter (n: entryNameSplit != null) entryNameSplit;
-    entryPrefix = if (length entryPrefixes) == 0
-                  then throw "Could not match an entry prefix against '${dir-entry}'."
-                  else elemAt entryPrefixes 0;
-    # name, value pair, where "name" has ".nix" removed
-    fullPath = path + "/${dir-entry}";
-  in
-    { name = entryPrefix; value = fullPath; };
-
-  dirEntriesToAttrs = path: dirEntries: let
-    attrList = map (n: dirEntryToAttr path n) dirEntries;
-  in
-    listToAttrs attrList;
+  inherit (import ./fileEntries.nix) isImportable dirEntryToAttr dirEntriesToAttrs;
 
   # Find a list of Nix importables from the given Path, ordered lexicographically
   #   path: path to search for Nix importables
-  findImportableEntriesInPath = path: let
+  findImportableEntriesInPath = dirPath: let
     # find all the entries in a dir
-    dirEntries = readDir path;
+    dirEntries = readDir dirPath;
     # extract just the path-names
     dirNames = attrNames dirEntries;
     # filter for the importable entries
-    importableEntries = filter (n: (isImportable n path)) dirNames;
+    importableEntries = filter (n: (isImportable n dirPath)) dirNames;
   in
-    dirEntriesToAttrs path importableEntries;
+    dirEntriesToAttrs dirPath importableEntries;
 
   findImportablesInPath = path:
     attrValues (findImportableEntriesInPath path);
