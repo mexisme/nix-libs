@@ -3,6 +3,7 @@
 
 { system,
   inputs,
+  overlays ? [],
 }:
 
 let
@@ -20,13 +21,13 @@ let
 
   pkgs-alt = with inputs;
     {
-      master = build { inherit system; nipkgs = nixpkgs-master; };
-      unstable = build { inherit system; nixpkgs = nixpkgs-unstable; };
+      master = build { inherit system overlays; nipkgs = nixpkgs-master; };
+      unstable = build { inherit system overlays; nixpkgs = nixpkgs-unstable; };
     };
 
   nixpkgs' = with inputs;
     if isDarwin
-    then build { inherit system nixpkgs; }
-    else build { inherit system; nixpkgs = nixpkgs-darwin; };
+    then build { inherit system overlays nixpkgs; }
+    else build { inherit system overlays; nixpkgs = nixpkgs-darwin; };
 
 in nixpkgs' // { inherit pkgs-alt; }

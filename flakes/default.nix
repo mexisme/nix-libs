@@ -22,8 +22,8 @@ let
 
   package-set = import ./package-set.nix { inherit importable; };
 
-  nixpkgs-combined = { inputs, system }:
-    forAllSystems (system: nixpkgs-builder { inherit inputs system; });
+  nixpkgs-combined = { system, ... }@args:
+    forAllSystems (system: nixpkgs-builder args);
 
 in {
   inherit systems forAllSystems checks nixpkgs-builder package-set nixpkgs-combined;
