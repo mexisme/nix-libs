@@ -21,13 +21,13 @@ let
 
   pkgs-alt = with inputs;
     {
-      master = build { inherit system overlays; nipkgs = nixpkgs-master; };
+      master = build { inherit system overlays; nixpkgs = nixpkgs-master; };
       unstable = build { inherit system overlays; nixpkgs = nixpkgs-unstable; };
     };
 
   nixpkgs' = with inputs;
     if isDarwin
-    then build { inherit system overlays nixpkgs; }
-    else build { inherit system overlays; nixpkgs = nixpkgs-darwin; };
+    then build { inherit system overlays; nixpkgs = nixpkgs-darwin; }
+    else build { inherit system overlays nixpkgs; };
 
 in nixpkgs' // { inherit pkgs-alt; }
